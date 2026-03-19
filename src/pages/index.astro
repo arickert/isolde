@@ -92,7 +92,7 @@ const rendered = await Promise.all(
   <!-- Overlay windows -->
   <div class="windows-layer">
     {rendered.map((page) => (
-      <div class="window" id={`window-${page.id}`}>
+      <div class="window" id={`window-${page.id}`} style={`width: ${page.data.width}px;`}>
         <div class="window-header">
           <button class="window-close" aria-label="Close">&times;</button>
         </div>
@@ -502,7 +502,6 @@ const rendered = await Promise.all(
   .window {
     display: none;
     position: absolute;
-    width: 500px;
     max-width: calc(100vw - 2rem);
     max-height: 80vh;
     background: #beb5c4;

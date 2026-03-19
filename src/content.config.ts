@@ -9,6 +9,7 @@ const pages = defineCollection({
     images: z.array(z.string()).optional(),
     order: z.number().default(0),
     icon: z.string().default('✕'),
+    width: z.number().default(678),
   }),
 });
 
