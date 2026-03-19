@@ -1,6 +1,8 @@
 ---
 import { getCollection, render } from 'astro:content';
 
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
 const pages = await getCollection('pages');
 pages.sort((a, b) => a.data.order - b.data.order);
 
@@ -17,10 +19,19 @@ const rendered = await Promise.all(
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Isolde</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Goudy+Bookletter+1911&display=swap" rel="stylesheet" />
+  <style set:html={`
+    @font-face {
+      font-family: 'Monument Grotesk Variable';
+      src: url('${base}/fonts/MonumentGrotesk-Regular.woff2') format('woff2');
+      font-weight: 200 1000;
+      font-style: normal;
+      font-display: swap;
+    }
+  `} />
 </head>
 <body>
   <div class="page">
@@ -29,7 +40,7 @@ const rendered = await Promise.all(
     <a href="#" class="hero-link" data-window="information">
       <img
         class="hero-image"
-        src="/images/2025_Isolde_Windows_ASCII.jpg"
+        src={`${base}/images/2025_Isolde_Windows_ASCII.jpg`}
         alt=""
         loading="eager"
       />
@@ -279,14 +290,6 @@ const rendered = await Promise.all(
 </html>
 
 <style is:global>
-  @font-face {
-    font-family: 'Monument Grotesk Variable';
-    src: url('/fonts/MonumentGrotesk-Regular.woff2') format('woff2');
-    font-weight: 200 1000;
-    font-style: normal;
-    font-display: swap;
-  }
-
   * {
     margin: 0;
     padding: 0;
