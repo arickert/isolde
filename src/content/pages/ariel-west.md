@@ -1,6 +1,6 @@
 ---
 title: "Ariel West"
-icon: "✕"
+icon: "/icons/construction.svg"
 date: "March 8 – April 19, 2026"
 images:
   - "https://picsum.photos/seed/isolde-aw1/800/600"

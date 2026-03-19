@@ -59,7 +59,9 @@ const rendered = await Promise.all(
       <a href="#" class="nav-item" data-action="home">⌂&thinsp;Home</a>
       {rendered.map((page) => (
         <a href="#" class="nav-item" data-window={page.id}>
-          {page.data.icon}&thinsp;{page.data.title}
+          {page.data.icon.endsWith('.svg')
+            ? <img class="nav-icon" src={`${base}${page.data.icon}`} alt="" />
+            : page.data.icon}&thinsp;{page.data.title}
         </a>
       ))}
     </nav>
@@ -73,13 +75,18 @@ const rendered = await Promise.all(
     </div>
 
     <div class="social">
-      <a href="mailto:info@isolde.nyc">✉&thinsp;Email</a>
-      <a href="https://are.na/isolde-nyc">✱&thinsp;Are.na</a>
-      <a href="https://instagram.com/isolde.nyc">◉&thinsp;Instagram</a>
-      <a href="https://buttondown.com/isolde" target="_blank">✦&thinsp;Newsletter</a>
+      <a href="mailto:info@isolde.nyc"><img class="nav-icon" src={`${base}/icons/mail.svg`} alt="" />&thinsp;Email</a>
+      <a href="https://www.are.na/isolde-nyc/channels"><img class="nav-icon" src={`${base}/icons/arena.svg`} alt="" />&thinsp;Are.na</a>
+      <a href="https://www.instagram.com/isolde.nyc"><img class="nav-icon" src={`${base}/icons/instagram.svg`} alt="" />&thinsp;Instagram</a>
+      <a href="https://buttondown.com/isolde" target="_blank"><img class="nav-icon" src={`${base}/icons/mail.svg`} alt="" />&thinsp;Newsletter</a>
     </div>
 
-    <div class="clock" id="clock"></div>
+    <div class="footer-row">
+      <span class="clock" id="clock"></span>
+      <a class="hit-counter" href="https://www.hitwebcounter.com/" target="_blank">
+        <img src="https://hitwebcounter.com/counter/counter.php?page=21467869&style=0007&nbdigits=5&type=page&initCount=0" alt="visitor count" />
+      </a>
+    </div>
   </div>
 
   <!-- Overlay windows -->
@@ -145,8 +152,6 @@ const rendered = await Promise.all(
     function updateBodyScroll() {
       const anyOpen = document.querySelectorAll('.window.open').length > 0;
       document.body.classList.toggle('has-open-window', anyOpen && isMobile());
-      const layer = document.querySelector('.windows-layer') as HTMLElement | null;
-      if (layer) layer.style.pointerEvents = anyOpen ? 'auto' : 'none';
     }
 
     function openWindow(id: string) {
@@ -202,12 +207,6 @@ const rendered = await Promise.all(
         const win = btn.closest('.window') as HTMLElement | null;
         if (win) closeWindow(win);
       });
-    });
-
-    // Clickout to close
-    document.querySelector('.windows-layer')?.addEventListener('pointerdown', (e) => {
-      if ((e.target as HTMLElement).closest('.window')) return;
-      closeAllWindows();
     });
 
     // Pointer-based dragging (matches Cargo behavior)
@@ -377,7 +376,6 @@ const rendered = await Promise.all(
   /* ---- Marquee ---- */
 
   .marquee-wrap {
-    width: 50%;
     max-width: 600px;
     overflow: hidden;
     margin-bottom: 0.75rem;
@@ -390,7 +388,7 @@ const rendered = await Promise.all(
   .marquee-track {
     display: inline-flex;
     white-space: nowrap;
-    animation: marquee-scroll 20s linear infinite;
+    animation: marquee-scroll 10s linear infinite;
   }
 
   .marquee-track span {
@@ -431,6 +429,13 @@ const rendered = await Promise.all(
     color: rgba(158, 145, 145, 0.85);
   }
 
+  .nav-icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.15em;
+  }
+
   /* ---- Address ---- */
 
   .address {
@@ -452,16 +457,37 @@ const rendered = await Promise.all(
     color: rgba(0, 0, 0, 0.4);
   }
 
+  .social .nav-icon {
+    opacity: 0.4;
+  }
+
+  .social a:hover .nav-icon {
+    opacity: 0.85;
+  }
+
   .social a:hover {
     color: rgba(158, 145, 145, 0.85);
   }
 
-  /* ---- Clock ---- */
+  /* ---- Footer Row ---- */
+
+  .footer-row {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: min(1000px, 60vw);
+    width: 100%;
+  }
 
   .clock {
     font-size: 1.1rem;
     line-height: 1;
     color: rgba(0, 0, 0, 0.4);
+  }
+
+  .hit-counter img {
+    height: 0.6rem;
+    display: block;
   }
 
   /* ---- Windows ---- */
