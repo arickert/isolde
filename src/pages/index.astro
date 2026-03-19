@@ -1,0 +1,656 @@
+---
+import { getCollection, render } from 'astro:content';
+
+const pages = await getCollection('pages');
+pages.sort((a, b) => a.data.order - b.data.order);
+
+const rendered = await Promise.all(
+  pages.map(async (page) => {
+    const { Content } = await render(page);
+    return { ...page, Content };
+  })
+);
+---
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Isolde</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Goudy+Bookletter+1911&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="page">
+    <h1 class="title">Isolde</h1>
+
+    <a href="#" class="hero-link" data-window="information">
+      <img
+        class="hero-image"
+        src="/images/2025_Isolde_Windows_ASCII.jpg"
+        alt=""
+        loading="eager"
+      />
+    </a>
+
+    <div class="marquee-wrap">
+      <div class="marquee">
+        <div class="marquee-track">
+          <span>Isolde is an artist-run project space for exhibitions, screenings, and experimental work.&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span>Isolde is an artist-run project space for exhibitions, screenings, and experimental work.&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="main-nav">
+      <a href="#" class="nav-item" data-action="home">⌂&thinsp;Home</a>
+      {rendered.map((page) => (
+        <a href="#" class="nav-item" data-window={page.id}>
+          {page.data.icon}&thinsp;{page.data.title}
+        </a>
+      ))}
+    </nav>
+
+    <div class="address">
+      55 West 8th Street<br />
+      Sixth Floor<br />
+      New York, NY 10011<br />
+      Sundays 12–6 and by appointment<br /><br />
+      <em>Stair access only</em>
+    </div>
+
+    <div class="social">
+      <a href="mailto:info@isolde.nyc">✉&thinsp;Email</a>
+      <a href="https://are.na/isolde-nyc">✱&thinsp;Are.na</a>
+      <a href="https://instagram.com/isolde.nyc">◉&thinsp;Instagram</a>
+      <a href="https://buttondown.com/isolde" target="_blank">✦&thinsp;Newsletter</a>
+    </div>
+
+    <div class="clock" id="clock"></div>
+  </div>
+
+  <!-- Overlay windows -->
+  <div class="windows-layer">
+    {rendered.map((page) => (
+      <div class="window" id={`window-${page.id}`}>
+        <div class="window-header">
+          <button class="window-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="window-content">
+          {page.data.date && <p class="window-date">{page.data.date}</p>}
+          {page.data.images && page.data.images.length > 0 && (
+            <div class="window-images">
+              {page.data.images.map((img: string) => (
+                <img src={img} alt="" loading="lazy" />
+              ))}
+            </div>
+          )}
+          <div class="window-body">
+            <page.Content />
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <script>
+    function clamp(n: number, min: number, max: number) {
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function isMobile() {
+      return window.innerWidth <= 678;
+    }
+
+    let highestZ = 100;
+
+    function bringToFront(win: HTMLElement) {
+      highestZ++;
+      win.style.zIndex = String(highestZ);
+    }
+
+    function randomizePosition(win: HTMLElement) {
+      requestAnimationFrame(() => {
+        const rect = win.getBoundingClientRect();
+        const maxX = Math.max(0, window.innerWidth - rect.width);
+        const maxY = Math.max(0, window.innerHeight - rect.height);
+        const minX = Math.floor(maxX * 0.2);
+        const maxX2 = Math.floor(maxX * 0.8);
+        const minY = Math.floor(maxY * 0.15);
+        const maxY2 = Math.floor(maxY * 0.7);
+        const x = maxX2 > minX
+          ? minX + Math.floor(Math.random() * (maxX2 - minX + 1))
+          : Math.floor(maxX / 2);
+        const y = maxY2 > minY
+          ? minY + Math.floor(Math.random() * (maxY2 - minY + 1))
+          : Math.floor(maxY / 2);
+        win.style.left = x + 'px';
+        win.style.top = y + 'px';
+      });
+    }
+
+    function updateBodyScroll() {
+      const anyOpen = document.querySelectorAll('.window.open').length > 0;
+      document.body.classList.toggle('has-open-window', anyOpen && isMobile());
+      const layer = document.querySelector('.windows-layer') as HTMLElement | null;
+      if (layer) layer.style.pointerEvents = anyOpen ? 'auto' : 'none';
+    }
+
+    function openWindow(id: string) {
+      const win = document.getElementById(`window-${id}`);
+      if (!win) return;
+
+      if (win.classList.contains('open')) {
+        bringToFront(win);
+        return;
+      }
+
+      win.classList.add('open');
+      bringToFront(win);
+
+      if (!isMobile()) {
+        randomizePosition(win);
+      }
+
+      updateBodyScroll();
+    }
+
+    function closeWindow(win: HTMLElement) {
+      win.classList.remove('open');
+      updateBodyScroll();
+    }
+
+    function closeAllWindows() {
+      document.querySelectorAll<HTMLElement>('.window.open').forEach((win) => {
+        win.classList.remove('open');
+      });
+      updateBodyScroll();
+    }
+
+    // Nav + hero link clicks
+    document.querySelectorAll<HTMLElement>('[data-window]').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = el.dataset.window;
+        if (id) openWindow(id);
+      });
+    });
+
+    document.querySelectorAll<HTMLElement>('[data-action="home"]').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeAllWindows();
+      });
+    });
+
+    // Close buttons
+    document.querySelectorAll<HTMLButtonElement>('.window-close').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const win = btn.closest('.window') as HTMLElement | null;
+        if (win) closeWindow(win);
+      });
+    });
+
+    // Clickout to close
+    document.querySelector('.windows-layer')?.addEventListener('pointerdown', (e) => {
+      if ((e.target as HTMLElement).closest('.window')) return;
+      closeAllWindows();
+    });
+
+    // Pointer-based dragging (matches Cargo behavior)
+    document.querySelectorAll<HTMLElement>('.window').forEach((win) => {
+      let dragging = false;
+      let startX = 0, startY = 0;
+      let originLeft = 0, originTop = 0;
+
+      win.addEventListener('pointerdown', (e) => {
+        if (isMobile()) return;
+        if ((e.target as HTMLElement).closest('a, button, input, textarea, select, img')) return;
+
+        dragging = true;
+        win.classList.add('is-dragging');
+        win.setPointerCapture(e.pointerId);
+        bringToFront(win);
+
+        const rect = win.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        originLeft = rect.left;
+        originTop = rect.top;
+      });
+
+      win.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const rect = win.getBoundingClientRect();
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        const newLeft = originLeft + dx;
+        const newTop = originTop + dy;
+        const maxLeft = window.innerWidth - rect.width;
+        const maxTop = window.innerHeight - rect.height;
+        win.style.left = clamp(newLeft, 0, maxLeft) + 'px';
+        win.style.top = clamp(newTop, 0, maxTop) + 'px';
+      });
+
+      const stop = (e: PointerEvent) => {
+        if (!dragging) return;
+        dragging = false;
+        win.classList.remove('is-dragging');
+        try { win.releasePointerCapture(e.pointerId); } catch {}
+      };
+
+      win.addEventListener('pointerup', stop);
+      win.addEventListener('pointercancel', stop);
+    });
+
+    // Clamp windows to viewport on resize
+    window.addEventListener('resize', () => {
+      document.querySelectorAll<HTMLElement>('.window.open').forEach((win) => {
+        if (isMobile()) return;
+        const rect = win.getBoundingClientRect();
+        const maxLeft = Math.max(0, window.innerWidth - rect.width);
+        const maxTop = Math.max(0, window.innerHeight - rect.height);
+        win.style.left = clamp(rect.left, 0, maxLeft) + 'px';
+        win.style.top = clamp(rect.top, 0, maxTop) + 'px';
+      });
+    });
+
+    // Live clock
+    function updateClock() {
+      const el = document.getElementById('clock');
+      if (!el) return;
+      const now = new Date();
+      const opts: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      };
+      el.textContent = now.toLocaleString('en-US', opts);
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>
+
+<style is:global>
+  @font-face {
+    font-family: 'Monument Grotesk Variable';
+    src: url('/fonts/MonumentGrotesk-Regular.woff2') format('woff2');
+    font-weight: 200 1000;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Monument Grotesk Variable', system-ui, -apple-system, sans-serif;
+    background: #fff;
+    color: rgba(0, 0, 0, 0.85);
+    min-height: 100vh;
+    line-height: 1.2;
+    font-size: 1.1rem;
+    font-weight: 400;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body.has-open-window {
+    overflow: hidden !important;
+  }
+
+  a {
+    color: rgba(0, 0, 0, 0.85);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: rgba(158, 145, 145, 0.85);
+  }
+
+  a:active {
+    opacity: 0.7;
+  }
+
+  /* ---- Page ---- */
+
+  .page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0.8rem 1rem 1.25rem;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* ---- Title ---- */
+
+  .title {
+    font-family: 'Goudy Bookletter 1911', Georgia, serif;
+    font-size: 3.55rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0;
+    color: rgba(158, 145, 145, 0.85);
+  }
+
+  /* ---- Hero Image ---- */
+
+  .hero-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 0;
+    margin-bottom: 0.75rem;
+  }
+
+  .hero-link:hover {
+    opacity: 0.85;
+  }
+
+  .hero-image {
+    max-width: 90vw;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    display: block;
+    object-fit: contain;
+  }
+
+  /* ---- Marquee ---- */
+
+  .marquee-wrap {
+    width: 50%;
+    max-width: 600px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+  }
+
+  .marquee {
+    overflow: hidden;
+  }
+
+  .marquee-track {
+    display: inline-flex;
+    white-space: nowrap;
+    animation: marquee-scroll 20s linear infinite;
+  }
+
+  .marquee-track span {
+    flex-shrink: 0;
+    font-family: 'Goudy Bookletter 1911', Georgia, serif;
+    font-size: 1.09rem;
+    font-weight: 400;
+    line-height: 1.2;
+    color: rgba(0, 0, 0, 0.85);
+  }
+
+  @keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ---- Navigation ---- */
+
+  .main-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.3rem 2.5rem;
+    padding: 0.7rem 1.5rem;
+  }
+
+  .nav-item {
+    font-family: 'Goudy Bookletter 1911', Georgia, serif;
+    font-size: 1.31rem;
+    font-weight: 400;
+    line-height: 1.1;
+    color: rgba(0, 0, 0, 0.85);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .nav-item:hover {
+    color: rgba(158, 145, 145, 0.85);
+  }
+
+  /* ---- Address ---- */
+
+  .address {
+    font-size: 0.99rem;
+    line-height: 1.2;
+    margin-bottom: 1.25rem;
+  }
+
+  /* ---- Social ---- */
+
+  .social {
+    display: flex;
+    gap: 1.75rem;
+  }
+
+  .social a {
+    font-size: 0.98rem;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  .social a:hover {
+    color: rgba(158, 145, 145, 0.85);
+  }
+
+  /* ---- Clock ---- */
+
+  .clock {
+    font-size: 1.1rem;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  /* ---- Windows ---- */
+
+  .windows-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .window {
+    display: none;
+    position: absolute;
+    width: 500px;
+    max-width: calc(100vw - 2rem);
+    max-height: 80vh;
+    background: #beb5c4;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: auto;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .window.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+  }
+
+  .window.open {
+    display: flex;
+  }
+
+  .window-header {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.75rem 1rem 0;
+    flex-shrink: 0;
+  }
+
+  .window-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: rgba(0, 0, 0, 0.85);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: opacity 0.15s;
+  }
+
+  .window-close:hover {
+    opacity: 0.5;
+  }
+
+  .window-content {
+    padding: 0 2rem 2rem;
+    overflow-y: auto;
+    flex: 1;
+    cursor: auto;
+    text-align: left;
+  }
+
+  .window-date {
+    font-size: 1.65rem;
+    line-height: 1.2;
+    color: rgba(1, 1, 1, 0.85);
+    margin-bottom: 0.75rem;
+  }
+
+  .window-images {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .window-images img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .window-body {
+    font-size: 1.65rem;
+    line-height: 1.2;
+    color: rgba(1, 1, 1, 0.85);
+  }
+
+  .window-body p {
+    margin-bottom: 0.6rem;
+  }
+
+  .window-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .window-body a {
+    color: rgba(1, 1, 1, 0.85);
+    text-decoration: none;
+  }
+
+  .window-body a:hover {
+    color: rgba(158, 145, 145, 0.85);
+  }
+
+  .window-body h1 {
+    font-family: 'Goudy Bookletter 1911', Georgia, serif;
+    font-size: 2.5rem;
+    font-weight: 400;
+    line-height: 1;
+    color: rgba(1, 1, 1, 0.85);
+    margin-bottom: 0.5rem;
+  }
+
+  /* ---- Mobile ---- */
+
+  @media (max-width: 678px) {
+    body {
+      overflow: auto;
+      font-size: 1.3rem;
+    }
+
+    .page {
+      height: auto;
+      overflow: visible;
+      padding: 1.25rem 0rem 1.5rem;
+    }
+
+    .title {
+      font-size: 3.55rem;
+    }
+
+    .hero-link {
+      flex: none;
+      width: 100%;
+      padding: 0 0.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-image {
+      width: 100%;
+      max-width: none;
+      max-height: none;
+    }
+    .address{
+      font-size: 1.06rem;
+    
+    }
+    .marquee-wrap {
+      width: 100%;
+    }
+
+    .marquee-track span {
+      font-size: 1.02rem;
+    }
+
+    .main-nav {
+      gap: 0.4rem 1.5rem;
+    }
+
+    .nav-item {
+      font-size: 1.11rem;
+    }
+    .social a {
+      font-size: 0.896rem;
+    }
+
+    .window {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      border: none;
+      cursor: auto;
+    }
+
+    .window-header {
+      padding: 1rem 1.25rem 0;
+    }
+
+    .window-close {
+      font-size: 1.8rem;
+    }
+
+    .window-content {
+      padding: 0 1.25rem 1.25rem;
+    }
+  }
+</style>
