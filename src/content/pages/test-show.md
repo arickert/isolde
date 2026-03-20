@@ -8,6 +8,7 @@ row: current
 images:
   - https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/960px-Image_created_with_a_mobile_phone.png
   - https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/TEIDE.JPG/250px-TEIDE.JPG
+  - /images/248709585_67360c4457_k.jpg
 ---
 
 Test test
