@@ -1,8 +1,7 @@
 ---
 title: "Isolde, Isolde"
-icon: "★"
 date: "March 6 – April 5, 2026"
-row: "current"
+status: "current"
 images:
   - "https://picsum.photos/seed/isolde-gs1/800/600"
   - "https://picsum.photos/seed/isolde-gs2/800/600"

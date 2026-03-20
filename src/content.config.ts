@@ -8,9 +8,10 @@ const pages = defineCollection({
     date: z.string().optional(),
     images: z.array(z.string()).optional(),
     order: z.number().default(0),
-    icon: z.string().default('✕'),
+    icon: z.string().optional(),
     width: z.number().default(678),
-    row: z.enum(['current', 'past', 'info']).default('current'),
+    row: z.enum(['current', 'past', 'info']).optional(),
+    status: z.enum(['past', 'current', 'future']).optional(),
   }),
 });
 

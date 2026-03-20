@@ -1,11 +1,10 @@
 ---
 title: "After Hours"
-icon: ""
 date: "November 9 – December 21, 2025"
+status: "past"
 images:
   - "https://picsum.photos/seed/isolde-ah1/800/600"
 order: 11
-row: "past"
 ---
 
 *After Hours* was a group screening program featuring short films and video work made between dusk and dawn.

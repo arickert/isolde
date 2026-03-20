@@ -3,19 +3,34 @@ import { getCollection, render } from 'astro:content';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
+const statusIcons: Record<string, string> = {
+  current: '★',
+  future: '◆',
+  past: '',
+};
+
+const statusRows: Record<string, string> = {
+  current: 'current',
+  future: 'current',
+  past: 'past',
+};
+
 const pages = await getCollection('pages');
 pages.sort((a, b) => a.data.order - b.data.order);
 
 const rendered = await Promise.all(
   pages.map(async (page) => {
     const { Content } = await render(page);
-    return { ...page, Content };
+    const status = page.data.status;
+    const icon = page.data.icon ?? (status ? statusIcons[status] : '✕');
+    const row = page.data.row ?? (status ? statusRows[status] : 'current');
+    return { ...page, Content, icon, row };
   })
 );
 
-const currentShows = rendered.filter((p) => p.data.row === 'current');
-const pastShows = rendered.filter((p) => p.data.row === 'past');
-const infoPages = rendered.filter((p) => p.data.row === 'info');
+const currentShows = rendered.filter((p) => p.row === 'current');
+const pastShows = rendered.filter((p) => p.row === 'past');
+const infoPages = rendered.filter((p) => p.row === 'info');
 ---
 
 <html lang="en">
@@ -64,16 +79,18 @@ const infoPages = rendered.filter((p) => p.data.row === 'info');
       <div class="nav-row">
         {currentShows.map((page) => (
           <a href="#" class="nav-item" data-window={page.id}>
-            {page.data.icon.endsWith('.svg')
-              ? <img class="nav-icon" src={`${base}${page.data.icon}`} alt="" />
-              : page.data.icon}&thinsp;{page.data.title}
+            {page.icon.endsWith('.svg')
+              ? <img class="nav-icon" src={`${base}${page.icon}`} alt="" />
+              : page.icon ? <Fragment>{page.icon}&thinsp;</Fragment> : null}{page.data.title}
           </a>
         ))}
       </div>
       <div class="nav-row past-row">
         {pastShows.map((page) => (
           <a href="#" class="nav-item" data-window={page.id}>
-            {page.data.title}
+            {page.icon.endsWith('.svg')
+              ? <img class="nav-icon" src={`${base}${page.icon}`} alt="" />
+              : page.icon ? <Fragment>{page.icon}&thinsp;</Fragment> : null}{page.data.title}
           </a>
         ))}
       </div>
@@ -90,9 +107,9 @@ const infoPages = rendered.filter((p) => p.data.row === 'info');
     <div class="nav-row info-row">
       {infoPages.map((page) => (
         <a href="#" class="nav-item" data-window={page.id}>
-          {page.data.icon.endsWith('.svg')
-            ? <img class="nav-icon" src={`${base}${page.data.icon}`} alt="" />
-            : page.data.icon}&thinsp;{page.data.title}
+          {page.icon.endsWith('.svg')
+            ? <img class="nav-icon" src={`${base}${page.icon}`} alt="" />
+            : page.icon ? <Fragment>{page.icon}&thinsp;</Fragment> : null}{page.data.title}
         </a>
       ))}
     </div>

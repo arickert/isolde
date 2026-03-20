@@ -1,11 +1,10 @@
 ---
 title: "Room Tone"
-icon: ""
 date: "June 8 – July 20, 2025"
+status: "past"
 images:
   - "https://picsum.photos/seed/isolde-rt1/800/600"
 order: 12
-row: "past"
 ---
 
 *Room Tone* was a solo exhibition by Kai Nakamura exploring sound, silence, and the architecture of listening.

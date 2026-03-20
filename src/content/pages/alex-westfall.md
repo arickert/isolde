@@ -2,6 +2,7 @@
 title: "Alex Westfall"
 icon: "/icons/construction.svg"
 date: "May 3 – June 14, 2026"
+status: "future"
 images:
   - "https://picsum.photos/seed/isolde-axw1/800/600"
   - "https://picsum.photos/seed/isolde-axw2/800/600"
