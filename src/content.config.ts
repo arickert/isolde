@@ -10,6 +10,7 @@ const pages = defineCollection({
     order: z.number().default(0),
     icon: z.string().default('✕'),
     width: z.number().default(678),
+    row: z.enum(['current', 'past', 'info']).default('current'),
   }),
 });
 

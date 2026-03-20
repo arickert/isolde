@@ -1,0 +1,35 @@
+backend:
+  name: github
+  repo: arickert/isolde
+  branch: main
+
+media_folder: "public/images"
+public_folder: "/images"
+
+collections:
+  - name: "pages"
+    label: "Pages"
+    folder: "src/content/pages"
+    create: true
+    slug: "{{slug}}"
+    extension: "md"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "string", required: false }
+      - { label: "Icon", name: "icon", widget: "string", default: "✕", hint: "Text character or path to SVG (e.g. /icons/construction.svg)" }
+      - { label: "Display Order", name: "order", widget: "number", default: 0, hint: "Lower numbers appear first" }
+      - { label: "Window Width (px)", name: "width", widget: "number", default: 678 }
+      - label: "Navigation Row"
+        name: "row"
+        widget: "select"
+        default: "current"
+        options:
+          - { label: "Current Shows", value: "current" }
+          - { label: "Past Shows", value: "past" }
+          - { label: "Info / Press", value: "info" }
+      - label: "Images"
+        name: "images"
+        widget: "list"
+        required: false
+        field: { label: "Image URL", name: "url", widget: "string" }
+      - { label: "Body", name: "body", widget: "markdown" }

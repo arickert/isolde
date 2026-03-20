@@ -5,7 +5,7 @@ date: "May 3 – June 14, 2026"
 images:
   - "https://picsum.photos/seed/isolde-axw1/800/600"
   - "https://picsum.photos/seed/isolde-axw2/800/600"
-order: 4
+order: 5
 ---
 
 *The Weight of Light* is a new body of painting by Alex Westfall, exploring color, luminosity, and perception.

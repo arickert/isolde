@@ -12,6 +12,10 @@ const rendered = await Promise.all(
     return { ...page, Content };
   })
 );
+
+const currentShows = rendered.filter((p) => p.data.row === 'current');
+const pastShows = rendered.filter((p) => p.data.row === 'past');
+const infoPages = rendered.filter((p) => p.data.row === 'info');
 ---
 
 <html lang="en">
@@ -19,6 +23,7 @@ const rendered = await Promise.all(
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Isolde</title>
+  <meta name="base" content={base} />
   <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -40,7 +45,7 @@ const rendered = await Promise.all(
     <a href="#" class="hero-link" data-window="information">
       <img
         class="hero-image"
-        src={`${base}/images/2025_Isolde_Windows_ASCII.jpg`}
+        src={`${base}/images/Isolde_Windows_ASCII.png`}
         alt=""
         loading="eager"
       />
@@ -56,14 +61,22 @@ const rendered = await Promise.all(
     </div>
 
     <nav class="main-nav">
-      <a href="#" class="nav-item" data-action="home">⌂&thinsp;Home</a>
-      {rendered.map((page) => (
-        <a href="#" class="nav-item" data-window={page.id}>
-          {page.data.icon.endsWith('.svg')
-            ? <img class="nav-icon" src={`${base}${page.data.icon}`} alt="" />
-            : page.data.icon}&thinsp;{page.data.title}
-        </a>
-      ))}
+      <div class="nav-row">
+        {currentShows.map((page) => (
+          <a href="#" class="nav-item" data-window={page.id}>
+            {page.data.icon.endsWith('.svg')
+              ? <img class="nav-icon" src={`${base}${page.data.icon}`} alt="" />
+              : page.data.icon}&thinsp;{page.data.title}
+          </a>
+        ))}
+      </div>
+      <div class="nav-row past-row">
+        {pastShows.map((page) => (
+          <a href="#" class="nav-item" data-window={page.id}>
+            {page.data.title}
+          </a>
+        ))}
+      </div>
     </nav>
 
     <div class="address">
@@ -74,11 +87,36 @@ const rendered = await Promise.all(
       <em>Stair access only</em>
     </div>
 
+    <div class="nav-row info-row">
+      {infoPages.map((page) => (
+        <a href="#" class="nav-item" data-window={page.id}>
+          {page.data.icon.endsWith('.svg')
+            ? <img class="nav-icon" src={`${base}${page.data.icon}`} alt="" />
+            : page.data.icon}&thinsp;{page.data.title}
+        </a>
+      ))}
+    </div>
+
     <div class="social">
       <a href="mailto:info@isolde.nyc"><img class="nav-icon" src={`${base}/icons/mail.svg`} alt="" />&thinsp;Email</a>
       <a href="https://www.are.na/isolde-nyc/channels"><img class="nav-icon" src={`${base}/icons/arena.svg`} alt="" />&thinsp;Are.na</a>
       <a href="https://www.instagram.com/isolde.nyc"><img class="nav-icon" src={`${base}/icons/instagram.svg`} alt="" />&thinsp;Instagram</a>
-      <a href="https://buttondown.com/isolde" target="_blank"><img class="nav-icon" src={`${base}/icons/mail.svg`} alt="" />&thinsp;Newsletter</a>
+      <a href="#" class="newsletter-toggle" id="newsletter-toggle"><img class="nav-icon" src={`${base}/icons/mail.svg`} alt="" />&thinsp;Newsletter</a>
+    </div>
+
+    <div class="newsletter-overlay" id="newsletter-overlay">
+      <div class="newsletter-modal">
+        <div class="window-header">
+          <button class="window-close" id="newsletter-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="newsletter-modal-content">
+          <h2 class="newsletter-title">Newsletter</h2>
+          <form action="https://buttondown.com/api/emails/embed-subscribe/isolde" method="post" target="popupwindow">
+            <input type="email" name="email" placeholder="Email address" required />
+            <button type="submit">Subscribe</button>
+          </form>
+        </div>
+      </div>
     </div>
 
     <div class="footer-row">
@@ -89,6 +127,9 @@ const rendered = await Promise.all(
     </div>
   </div>
 
+  <!-- Flying objects -->
+  <div class="flying-objects" id="flying-objects"></div>
+
   <!-- Overlay windows -->
   <div class="windows-layer">
     {rendered.map((page) => (
@@ -97,17 +138,23 @@ const rendered = await Promise.all(
           <button class="window-close" aria-label="Close">&times;</button>
         </div>
         <div class="window-content">
+          <h1 class="window-title">{page.data.title}</h1>
           {page.data.date && <p class="window-date">{page.data.date}</p>}
           {page.data.images && page.data.images.length > 0 && (
-            <div class="window-images">
-              {page.data.images.map((img: string) => (
-                <img src={img} alt="" loading="lazy" />
-              ))}
+            <div class="window-image-top">
+              <img src={page.data.images[0]} alt="" loading="lazy" />
             </div>
           )}
           <div class="window-body">
             <page.Content />
           </div>
+          {page.data.images && page.data.images.length > 1 && (
+            <div class="window-images">
+              {page.data.images.slice(1).map((img: string) => (
+                <img src={img} alt="" loading="lazy" />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     ))}
@@ -284,6 +331,113 @@ const rendered = await Promise.all(
     }
     updateClock();
     setInterval(updateClock, 1000);
+
+    // Newsletter modal
+    const nlToggle = document.getElementById('newsletter-toggle');
+    const nlOverlay = document.getElementById('newsletter-overlay');
+    const nlClose = document.getElementById('newsletter-close');
+
+    nlToggle?.addEventListener('click', (e) => {
+      e.preventDefault();
+      nlOverlay?.classList.add('open');
+    });
+
+    nlClose?.addEventListener('click', () => {
+      nlOverlay?.classList.remove('open');
+    });
+
+    nlOverlay?.addEventListener('click', (e) => {
+      if (e.target === nlOverlay) {
+        nlOverlay.classList.remove('open');
+      }
+    });
+
+    // Flying objects
+    const base = document.querySelector('meta[name="base"]')?.getAttribute('content') || '';
+    const flyingImages = [
+      `${base}/images/288797042_123207673541864_8263222230316696005_n.jpg`,
+      `${base}/images/Talia_Site_Image.jpeg`,
+    ];
+
+    const flyContainer = document.getElementById('flying-objects');
+
+    interface FlightPath {
+      startX: number; startY: number;
+      endX: number; endY: number;
+    }
+
+    function randomFlightPath(): FlightPath {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const margin = 150;
+
+      const edges = [
+        { x: -margin, y: Math.random() * h },
+        { x: w + margin, y: Math.random() * h },
+        { x: Math.random() * w, y: -margin },
+        { x: Math.random() * w, y: h + margin },
+      ];
+
+      let start = edges[Math.floor(Math.random() * edges.length)];
+      let end: { x: number; y: number };
+      do {
+        end = edges[Math.floor(Math.random() * edges.length)];
+      } while (Math.abs(start.x - end.x) < w * 0.3 && Math.abs(start.y - end.y) < h * 0.3);
+
+      return { startX: start.x, startY: start.y, endX: end.x, endY: end.y };
+    }
+
+    function launchFlying() {
+      if (!flyContainer) return;
+      const src = flyingImages[Math.floor(Math.random() * flyingImages.length)];
+      const size = 60 + Math.random() * 80;
+      const duration = 6000 + Math.random() * 8000;
+      const rotationSpeed = (Math.random() > 0.5 ? 1 : -1) * (180 + Math.random() * 360);
+      const path = randomFlightPath();
+
+      const el = document.createElement('div');
+      el.className = 'flying-obj';
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = '';
+      img.draggable = false;
+      el.appendChild(img);
+      flyContainer.appendChild(el);
+
+      const startTime = performance.now();
+
+      function animate(now: number) {
+        const t = Math.min((now - startTime) / duration, 1);
+        const x = path.startX + (path.endX - path.startX) * t;
+        const y = path.startY + (path.endY - path.startY) * t;
+        const rot = rotationSpeed * t;
+        el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
+
+        if (t < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          el.remove();
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function scheduleNext() {
+      const delay = 3000 + Math.random() * 6000;
+      setTimeout(() => {
+        launchFlying();
+        scheduleNext();
+      }, delay);
+    }
+
+    setTimeout(() => {
+      launchFlying();
+      scheduleNext();
+    }, 2000);
   </script>
 </body>
 </html>
@@ -347,6 +501,8 @@ const rendered = await Promise.all(
     line-height: 1;
     letter-spacing: 0;
     color: rgba(158, 145, 145, 0.85);
+    position: relative;
+    z-index: 2;
   }
 
   /* ---- Hero Image ---- */
@@ -357,7 +513,8 @@ const rendered = await Promise.all(
     justify-content: center;
     flex: 1;
     min-height: 0;
-    margin-bottom: 0.75rem;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
   }
 
   .hero-link:hover {
@@ -365,12 +522,15 @@ const rendered = await Promise.all(
   }
 
   .hero-image {
-    max-width: 90vw;
-    max-height: 100%;
+    max-width: 95vw;
+    max-height: 110%;
     width: auto;
     height: auto;
     display: block;
     object-fit: contain;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    transform: scale(1.25);
   }
 
   /* ---- Marquee ---- */
@@ -378,7 +538,9 @@ const rendered = await Promise.all(
   .marquee-wrap {
     max-width: 600px;
     overflow: hidden;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0;
+    position: relative;
+    z-index: 2;
   }
 
   .marquee {
@@ -409,10 +571,31 @@ const rendered = await Promise.all(
 
   .main-nav {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.5rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .nav-row {
+    display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 0.3rem 2.5rem;
-    padding: 0.7rem 1.5rem;
+    gap: 0.2rem 2.5rem;
+  }
+
+  .info-row {
+    margin-bottom: 0.75rem;
+  }
+
+  .past-row .nav-item {
+    opacity: 0.45;
+  }
+
+  .past-row .nav-item:hover {
+    opacity: 0.85;
   }
 
   .nav-item {
@@ -442,6 +625,8 @@ const rendered = await Promise.all(
     font-size: 0.99rem;
     line-height: 1.2;
     margin-bottom: 1.25rem;
+    position: relative;
+    z-index: 2;
   }
 
   /* ---- Social ---- */
@@ -469,6 +654,89 @@ const rendered = await Promise.all(
     color: rgba(158, 145, 145, 0.85);
   }
 
+  /* ---- Newsletter Modal ---- */
+
+  .newsletter-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(0, 0, 0, 0.15);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .newsletter-overlay.open {
+    display: flex;
+  }
+
+  .newsletter-modal {
+    background: #beb5c4;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+    width: 340px;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .newsletter-modal-content {
+    padding: 0 1.5rem 1.5rem;
+  }
+
+  .newsletter-title {
+    font-family: 'Goudy Bookletter 1911', Georgia, serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+    color: rgba(0, 0, 0, 0.85);
+  }
+
+  .newsletter-modal form {
+    display: flex;
+    gap: 0;
+  }
+
+  .newsletter-modal input[type="email"],
+  .newsletter-modal button[type="submit"] {
+    font-family: 'Monument Grotesk Variable', 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    margin: 0;
+    padding: 6px 8px;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    border-radius: 0;
+    line-height: 1;
+    height: 30px;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .newsletter-modal input[type="email"] {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.5);
+    outline: none;
+    border-right: none;
+    color: rgba(0, 0, 0, 0.85);
+  }
+
+  .newsletter-modal input[type="email"]:focus {
+    border-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .newsletter-modal input[type="email"]::placeholder {
+    color: rgba(0, 0, 0, 0.3);
+  }
+
+  .newsletter-modal button[type="submit"] {
+    background: transparent;
+    cursor: pointer;
+    color: rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+  }
+
+  .newsletter-modal button[type="submit"]:hover {
+    border-color: rgba(0, 0, 0, 0.5);
+    color: rgba(0, 0, 0, 0.85);
+  }
+
   /* ---- Footer Row ---- */
 
   .footer-row {
@@ -480,14 +748,37 @@ const rendered = await Promise.all(
   }
 
   .clock {
-    font-size: 1.1rem;
+    font-size: 0.93rem;
     line-height: 1;
-    color: rgba(0, 0, 0, 0.4);
   }
 
   .hit-counter img {
     height: 0.6rem;
     display: block;
+  }
+
+  /* ---- Flying Objects ---- */
+
+  .flying-objects {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 900;
+  }
+
+  .flying-obj {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    will-change: transform;
+  }
+
+  .flying-obj img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 
   /* ---- Windows ---- */
@@ -552,6 +843,15 @@ const rendered = await Promise.all(
     text-align: left;
   }
 
+  .window-title {
+    font-family: 'Goudy Bookletter 1911', Georgia, serif;
+    font-size: 2.5rem;
+    font-weight: 400;
+    line-height: 1;
+    color: rgba(1, 1, 1, 0.85);
+    margin-bottom: 0.5rem;
+  }
+
   .window-date {
     font-size: 1.65rem;
     line-height: 1.2;
@@ -559,11 +859,21 @@ const rendered = await Promise.all(
     margin-bottom: 0.75rem;
   }
 
+  .window-image-top {
+    margin-bottom: 1rem;
+  }
+
+  .window-image-top img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
   .window-images {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    margin-bottom: 1.25rem;
+    margin-top: 1.25rem;
   }
 
   .window-images img {
@@ -610,6 +920,10 @@ const rendered = await Promise.all(
     body {
       overflow: auto;
       font-size: 1.3rem;
+    } 
+
+    .info-row {
+      margin-bottom: 0.5rem;
     }
 
     .page {
@@ -619,27 +933,33 @@ const rendered = await Promise.all(
     }
 
     .title {
-      font-size: 3.55rem;
+      font-size: 2.85rem;
+    }
+    
+    .social {
+      gap: 1.25rem;
     }
 
     .hero-link {
       flex: none;
       width: 100%;
-      padding: 0 0.25rem;
-      margin-bottom: 0.75rem;
+      padding: 0 0.75rem;
+      margin-top: -1.5rem;
     }
 
     .hero-image {
       width: 100%;
-      max-width: none;
+      max-width: 550px;
       max-height: none;
+      transform: scale(1.1);
     }
     .address{
-      font-size: 1.06rem;
-    
+      font-size: 0.93rem;
+      margin-bottom:1rem;
     }
     .marquee-wrap {
       width: 100%;
+      margin-top: -3rem;
     }
 
     .marquee-track span {
@@ -647,7 +967,11 @@ const rendered = await Promise.all(
     }
 
     .main-nav {
-      gap: 0.4rem 1.5rem;
+      gap: 0.3rem;
+    }
+
+    .nav-row {
+      gap: 0.2rem 1.5rem;
     }
 
     .nav-item {
@@ -657,16 +981,25 @@ const rendered = await Promise.all(
       font-size: 0.896rem;
     }
 
+    .footer-row {
+      justify-content: space-between;
+      gap: 0;
+      padding: 0 0.5rem;
+    }
+
     .window {
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
       width: 100vw !important;
+      width: 100dvw !important;
       height: 100vh !important;
+      height: 100dvh !important;
       max-width: none !important;
       max-height: none !important;
       border: none;
       cursor: auto;
+      z-index: 1001 !important;
     }
 
     .window-header {
@@ -679,6 +1012,15 @@ const rendered = await Promise.all(
 
     .window-content {
       padding: 0 1.25rem 1.25rem;
+      font-size: 0.9rem;
+    }
+
+    .window-title {
+      font-size: 1.8rem;
+    }
+
+    .window-date {
+      font-size: 1.2rem;
     }
   }
 </style>

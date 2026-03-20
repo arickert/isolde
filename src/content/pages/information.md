@@ -1,7 +1,8 @@
 ---
 title: "Information"
-icon: "★"
+icon: "/icons/arrow.svg"
 order: 1
+row: "info"
 ---
 
 Isolde is an artist-run project space located on the sixth floor of 55 West 8th Street in Manhattan.
