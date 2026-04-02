@@ -1,7 +1,7 @@
 ---
 title: Test page
 date: July 29th-Nov 1st
-status: future
+status: ''
 icon: ''
 order: 8
 width: 678
