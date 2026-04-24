@@ -8,12 +8,12 @@ const pages = defineCollection({
     date: z.string().optional(),
     images: z.array(z.string()).optional(),
     order: z.number().default(0),
-    icon: z.string().optional(),
+    icon: z.preprocess((v) => (v === '' ? undefined : v), z.string().optional()),
     width: z.number().default(678),
     color: z.string().default('#beb5c4'),
     videos: z.array(z.string()).optional(),
-    row: z.enum(['current', 'past', 'info']).optional(),
-    status: z.enum(['past', 'current', 'future']).optional(),
+    row: z.preprocess((v) => (v === '' ? undefined : v), z.enum(['current', 'past', 'info']).optional()),
+    status: z.preprocess((v) => (v === '' ? undefined : v), z.enum(['past', 'current', 'future']).optional()),
   }),
 });
 
