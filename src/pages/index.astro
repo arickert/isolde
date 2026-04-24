@@ -138,9 +138,9 @@ const infoPages = rendered.filter((p) => p.row === 'info');
         </div>
         <div class="newsletter-modal-content">
           <h2 class="newsletter-title">Newsletter</h2>
-          <form action="https://buttondown.com/api/emails/embed-subscribe/isolde" method="post" target="popupwindow">
-            <input type="email" name="email" placeholder="Email address" required />
-            <button type="submit">Subscribe</button>
+          <form action="https://buttondown.com/api/emails/embed-subscribe/isolde.nyc" method="post" class="embeddable-buttondown-form">
+            <input type="email" name="email" id="bd-email" placeholder="Enter your email" required />
+            <input type="submit" value="Subscribe" />
           </form>
         </div>
       </div>
@@ -221,8 +221,8 @@ const infoPages = rendered.filter((p) => p.row === 'info');
         const maxY = Math.max(0, window.innerHeight - rect.height);
         const minX = Math.floor(maxX * 0.2);
         const maxX2 = Math.floor(maxX * 0.8);
-        const minY = Math.floor(maxY * 0.15);
-        const maxY2 = Math.floor(maxY * 0.7);
+        const minY = Math.floor(maxY * 0.02);
+        const maxY2 = Math.floor(maxY * 0.35);
         const x = maxX2 > minX
           ? minX + Math.floor(Math.random() * (maxX2 - minX + 1))
           : Math.floor(maxX / 2);
@@ -401,6 +401,8 @@ const infoPages = rendered.filter((p) => p.row === 'info');
 
     document.querySelectorAll('.window-content img').forEach((img) => {
       (img as HTMLElement).style.cursor = 'zoom-in';
+      (img as HTMLElement).draggable = false;
+      img.addEventListener('dragstart', (e) => e.preventDefault());
       img.addEventListener('dblclick', () => {
         const win = img.closest('.window-content');
         if (!win) return;
@@ -691,7 +693,7 @@ const infoPages = rendered.filter((p) => p.row === 'info');
   }
 
   .newsletter-modal input[type="email"],
-  .newsletter-modal button[type="submit"] {
+  .newsletter-modal input[type="submit"] {
     font-family: 'Monument Grotesk Variable', 'Space Grotesk', sans-serif;
     font-size: 0.9rem;
     margin: 0;
@@ -721,14 +723,14 @@ const infoPages = rendered.filter((p) => p.row === 'info');
     color: rgba(0, 0, 0, 0.3);
   }
 
-  .newsletter-modal button[type="submit"] {
+  .newsletter-modal input[type="submit"] {
     background: transparent;
     cursor: pointer;
     color: rgba(0, 0, 0, 0.5);
     white-space: nowrap;
   }
 
-  .newsletter-modal button[type="submit"]:hover {
+  .newsletter-modal input[type="submit"]:hover {
     border-color: rgba(0, 0, 0, 0.5);
     color: rgba(0, 0, 0, 0.85);
   }
@@ -883,10 +885,14 @@ const infoPages = rendered.filter((p) => p.row === 'info');
     margin-bottom: 1rem;
   }
 
-  .window-image-top img {
+  .window-image-top img,
+  .window-images img {
     width: 100%;
     height: auto;
     display: block;
+    -webkit-user-drag: none;
+    user-select: none;
+    pointer-events: auto;
   }
 
   .window-images {
@@ -896,11 +902,6 @@ const infoPages = rendered.filter((p) => p.row === 'info');
     margin-top: 1.25rem;
   }
 
-  .window-images img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
 
   .window-videos {
     display: flex;
