@@ -5,7 +5,7 @@ status: future
 icon: /icons/construction.svg
 order: 5
 width: 768
-color: ''
+color: '#ff0000'
 images:
   - https://picsum.photos/seed/isolde-axw1/800/600
   - https://picsum.photos/seed/isolde-axw2/800/600
