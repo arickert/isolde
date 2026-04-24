@@ -168,7 +168,7 @@ const infoPages = rendered.filter((p) => p.row === 'info');
           {page.data.date && <p class="window-date">{page.data.date}</p>}
           {page.data.images && page.data.images.length > 0 && (
             <div class="window-image-top">
-              <img src={page.data.images[0]} alt="" loading="lazy" />
+              <img src={page.data.images[0]} alt="" />
             </div>
           )}
           <div class="window-body">
@@ -177,7 +177,7 @@ const infoPages = rendered.filter((p) => p.row === 'info');
           {page.data.images && page.data.images.length > 1 && (
             <div class="window-images">
               {page.data.images.slice(1).map((img: string) => (
-                <img src={img} alt="" loading="lazy" />
+                <img src={img} alt="" />
               ))}
             </div>
           )}
