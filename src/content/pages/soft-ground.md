@@ -1,5 +1,6 @@
 ---
 title: "Soft Ground"
+artists: "Lina Meier, Tomás Reyes, Suki Park"
 date: "September 14 – October 26, 2025"
 status: "past"
 images:

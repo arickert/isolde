@@ -1,5 +1,6 @@
 ---
 title: "Threshold Conditions"
+artists: "Maya Torres, James Chen, Priya Sharma, Owen Brooks"
 date: "January 12 – February 23, 2025"
 status: "past"
 images:

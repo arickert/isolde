@@ -1,8 +1,9 @@
 ---
-title: Alex Westfall
-date: May 3 – June 14, 2026
-status: future
-icon: /icons/construction.svg
+title: "The Weight of Light"
+artists: "Alex Westfall"
+icon: "/icons/construction.svg"
+date: "May 3 – June 14, 2026"
+status: "future"
 order: 5
 width: 768
 color: '#ff0000'

@@ -1,5 +1,6 @@
 ---
 title: "Room Tone"
+artists: "Elena Vasquez"
 date: "June 8 – July 20, 2025"
 status: "past"
 images:

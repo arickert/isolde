@@ -1,5 +1,6 @@
 ---
 title: "After Hours"
+artists: "Jordan Blake, Sam Okafor"
 date: "November 9 – December 21, 2025"
 status: "past"
 images:

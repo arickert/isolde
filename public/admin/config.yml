@@ -14,7 +14,8 @@ collections:
     slug: "{{slug}}"
     extension: "md"
     fields:
-      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Title", name: "title", widget: "string", hint: "Show/exhibition title" }
+      - { label: "Artist(s)", name: "artists", widget: "string", required: false, hint: "Artist name(s) — leave blank for group shows or non-show pages" }
       - { label: "Date", name: "date", widget: "string", required: false }
       - label: "Show Status"
         name: "status"

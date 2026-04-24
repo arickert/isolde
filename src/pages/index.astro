@@ -32,15 +32,32 @@ const rendered = await Promise.all(
   pages.map(async (page) => {
     const { Content } = await render(page);
     const status = page.data.status;
-    const icon = page.data.icon ?? (status ? statusIcons[status] : '✕');
+    const rawIcon = page.data.icon;
+    const icon = rawIcon !== undefined ? rawIcon : (status ? statusIcons[status] : '✕');
     const row = page.data.row ?? (status ? statusRows[status] : 'current');
     return { ...page, Content, icon, row };
   })
 );
 
+const nowShows = rendered.filter((p) => p.row === 'current' && p.data.status === 'current');
+const futureShows = rendered.filter((p) => p.row === 'current' && p.data.status === 'future');
 const currentShows = rendered.filter((p) => p.row === 'current');
 const pastShows = rendered.filter((p) => p.row === 'past');
 const infoPages = rendered.filter((p) => p.row === 'info');
+
+function extractYear(date?: string): number {
+  if (!date) return 0;
+  const match = date.match(/(\d{4})/g);
+  return match ? parseInt(match[match.length - 1]) : 0;
+}
+
+const pastByYear = new Map<number, typeof pastShows>();
+for (const show of pastShows) {
+  const year = extractYear(show.data.date);
+  if (!pastByYear.has(year)) pastByYear.set(year, []);
+  pastByYear.get(year)!.push(show);
+}
+const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
 ---
 
 <html lang="en" data-theme="light">
@@ -86,35 +103,31 @@ const infoPages = rendered.filter((p) => p.row === 'info');
     </div>
 
     <nav class="main-nav">
-      <div class="nav-row">
-        {currentShows.map((page) => (
-          <a href="#" class="nav-item" data-window={page.id}>
-            {page.icon.endsWith('.svg')
-              ? <img class="nav-icon" src={`${base}${page.icon}`} alt="" />
-              : page.icon ? <Fragment>{page.icon}&thinsp;</Fragment> : null}{page.data.title}
-          </a>
-        ))}
-      </div>
-      <div class="nav-row past-row">
-        {pastShows.map((page) => (
-          <a href="#" class="nav-item" data-window={page.id}>
-            {page.icon.endsWith('.svg')
-              ? <img class="nav-icon" src={`${base}${page.icon}`} alt="" />
-              : page.icon ? <Fragment>{page.icon}&thinsp;</Fragment> : null}{page.data.title}
-          </a>
-        ))}
-      </div>
+      {nowShows.map((page) => (
+        <a href="#" class="nav-item" data-window={page.id}>
+          {page.icon.endsWith('.svg')
+            ? <img class="nav-icon" src={`${base}${page.icon}`} alt="" />
+            : page.icon ? <Fragment>{page.icon}&thinsp;</Fragment> : null}
+          {page.data.artists
+            ? <Fragment><strong>{page.data.artists}</strong> <em>{page.data.title}</em></Fragment>
+            : page.data.title}
+          {page.data.date && <span class="nav-date">{page.data.date}</span>}
+        </a>
+      ))}
+      {futureShows.map((page) => (
+        <a href="#" class="nav-item" data-window={page.id}>
+          {page.icon.endsWith('.svg')
+            ? <img class="nav-icon" src={`${base}${page.icon}`} alt="" />
+            : page.icon ? <Fragment>{page.icon}&thinsp;</Fragment> : null}
+          {page.data.artists
+            ? <Fragment><strong>{page.data.artists}</strong> <em>{page.data.title}</em></Fragment>
+            : page.data.title}
+          {page.data.date && <span class="nav-date">{page.data.date}</span>}
+        </a>
+      ))}
     </nav>
 
-    <div class="address">
-      55 West 8th Street<br />
-      Sixth Floor<br />
-      New York, NY 10011<br />
-      Sundays 12–6 and by appointment<br /><br />
-      <em>Stair access only</em>
-    </div>
-
-    <div class="nav-row info-row">
+    <div class="info-row">
       {infoPages.map((page) => (
         <a href="#" class="nav-item" data-window={page.id}>
           {page.icon.endsWith('.svg')
@@ -122,6 +135,9 @@ const infoPages = rendered.filter((p) => p.row === 'info');
             : page.icon ? <Fragment>{page.icon}&thinsp;</Fragment> : null}{page.data.title}
         </a>
       ))}
+      {pastShows.length > 0 && (
+        <a href="#" class="nav-item" id="archive-toggle">Archive</a>
+      )}
     </div>
 
     <div class="social">
@@ -148,6 +164,7 @@ const infoPages = rendered.filter((p) => p.row === 'info');
 
   </div>
 
+
   <!-- Lightbox -->
   <div class="lightbox" id="lightbox">
     <button class="lightbox-close" id="lightbox-close">&times;</button>
@@ -158,12 +175,43 @@ const infoPages = rendered.filter((p) => p.row === 'info');
 
   <!-- Overlay windows -->
   <div class="windows-layer">
+    <!-- Archive window -->
+    <div class="window" id="window-archive" style="width: 500px;">
+      <div class="window-header">
+        <button class="window-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="window-content archive-content">
+        <h1 class="window-title">Archive</h1>
+        {pastYears.map((year, yi) => (
+          <div class="archive-year" data-year={year}>
+            <button class="archive-year-header" data-expanded={yi === 0 ? "true" : "false"}>
+              <span class="archive-year-arrow">{yi === 0 ? '−' : '+'}</span>
+              <span>{year || 'Undated'}</span>
+            </button>
+            <div class="archive-year-list" style={yi === 0 ? '' : 'display:none;'}>
+              {pastByYear.get(year)!.map((show) => (
+                <a href="#" class="archive-show" data-window={show.id}>
+                  <span class="archive-show-title">
+                    {show.data.artists
+                      ? <Fragment><strong>{show.data.artists}</strong> <em>{show.data.title}</em></Fragment>
+                      : show.data.title}
+                  </span>
+                  {show.data.date && <span class="archive-show-date">{show.data.date}</span>}
+                </a>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
     {rendered.map((page) => (
       <div class="window" id={`window-${page.id}`} style={`width: ${page.data.width}px; background: ${page.data.color};`}>
         <div class="window-header">
           <button class="window-close" aria-label="Close">&times;</button>
         </div>
         <div class="window-content">
+          {page.data.artists && <p class="window-artists">{page.data.artists}</p>}
           <h1 class="window-title">{page.data.title}</h1>
           {page.data.date && <p class="window-date">{page.data.date}</p>}
           {page.data.images && page.data.images.length > 0 && (
@@ -432,6 +480,38 @@ const infoPages = rendered.filter((p) => p.row === 'info');
       }
     });
 
+    // Archive popup — uses standard window system
+    const archiveToggle = document.getElementById('archive-toggle');
+    archiveToggle?.addEventListener('click', (e) => {
+      e.preventDefault();
+      openWindow('archive');
+    });
+
+    document.querySelectorAll('.archive-year-header').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const expanded = btn.getAttribute('data-expanded') === 'true';
+        const list = btn.nextElementSibling as HTMLElement;
+        const arrow = btn.querySelector('.archive-year-arrow')!;
+        if (expanded) {
+          list.style.display = 'none';
+          btn.setAttribute('data-expanded', 'false');
+          arrow.textContent = '+';
+        } else {
+          list.style.display = '';
+          btn.setAttribute('data-expanded', 'true');
+          arrow.textContent = '−';
+        }
+      });
+    });
+
+    document.querySelectorAll('.archive-show').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const windowId = (link as HTMLElement).dataset.window;
+        if (windowId) openWindow(windowId);
+      });
+    });
+
   </script>
 </body>
 </html>
@@ -484,7 +564,7 @@ const infoPages = rendered.filter((p) => p.row === 'info');
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 0.8rem 1rem 1.25rem;
+    padding: 1rem 1rem 1.5rem;
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
@@ -501,6 +581,7 @@ const infoPages = rendered.filter((p) => p.row === 'info');
     color: rgba(158, 145, 145, 0.85);
     position: relative;
     z-index: 2;
+    margin-bottom: 1rem;
   }
 
   /* ---- Hero Image ---- */
@@ -511,8 +592,7 @@ const infoPages = rendered.filter((p) => p.row === 'info');
     justify-content: center;
     flex: 1;
     min-height: 0;
-    margin-top: 1rem;
-    margin-bottom: 1.5rem;
+    margin-top: 0.5rem;
   }
 
   .hero-link:hover {
@@ -536,6 +616,7 @@ const infoPages = rendered.filter((p) => p.row === 'info');
   .marquee-wrap {
     max-width: 600px;
     overflow: hidden;
+    margin-top: 1rem;
     margin-bottom: 0;
     position: relative;
     z-index: 2;
@@ -554,7 +635,7 @@ const infoPages = rendered.filter((p) => p.row === 'info');
   .marquee-track span {
     flex-shrink: 0;
     font-family: 'Goudy Bookletter 1911', Georgia, serif;
-    font-size: 1.09rem;
+    font-size: 1.02rem;
     font-weight: 400;
     line-height: 1.2;
     color: rgba(0, 0, 0, 0.85);
@@ -571,43 +652,50 @@ const infoPages = rendered.filter((p) => p.row === 'info');
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.7rem 1.5rem;
+    gap: 0.1rem;
+    padding: 0.3rem 1.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
     position: relative;
     z-index: 2;
   }
 
-  .nav-row {
+  .info-row {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 0.2rem 2.5rem;
-  }
-
-  .info-row {
-    margin-bottom: 0.75rem;
-  }
-
-  .past-row .nav-item {
-    opacity: 0.45;
-  }
-
-  .past-row .nav-item:hover {
-    opacity: 0.85;
+    gap: 0.2rem 1rem;
+    margin-bottom: 0.5rem;
   }
 
   .nav-item {
     font-family: 'Goudy Bookletter 1911', Georgia, serif;
-    font-size: 1.31rem;
+    font-size: 1.25rem;
     font-weight: 400;
-    line-height: 1.1;
+    line-height: 1.3;
     color: rgba(0, 0, 0, 0.85);
-    white-space: nowrap;
     cursor: pointer;
+  }
+
+  .nav-item strong {
+    font-family: 'Monument Grotesk Variable', 'Space Grotesk', sans-serif;
+    font-weight: 500;
+  }
+
+  .nav-date {
+    font-family: 'Monument Grotesk Variable', 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.35);
+    margin-left: 0.4rem;
   }
 
   .nav-item:hover {
     color: rgba(158, 145, 145, 0.85);
+  }
+
+  .nav-item:hover .nav-date {
+    color: rgba(158, 145, 145, 0.6);
   }
 
   .nav-icon {
@@ -620,9 +708,9 @@ const infoPages = rendered.filter((p) => p.row === 'info');
   /* ---- Address ---- */
 
   .address {
-    font-size: 0.99rem;
+    font-size: 0.95rem;
     line-height: 1.2;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.75rem;
     position: relative;
     z-index: 2;
   }
@@ -631,11 +719,11 @@ const infoPages = rendered.filter((p) => p.row === 'info');
 
   .social {
     display: flex;
-    gap: 1.75rem;
+    gap: 1.5rem;
   }
 
   .social a {
-    font-size: 0.98rem;
+    font-size: 0.9rem;
     line-height: 1;
     color: rgba(0, 0, 0, 0.4);
   }
@@ -733,6 +821,81 @@ const infoPages = rendered.filter((p) => p.row === 'info');
   .newsletter-modal input[type="submit"]:hover {
     border-color: rgba(0, 0, 0, 0.5);
     color: rgba(0, 0, 0, 0.85);
+  }
+
+  /* ---- Archive Popup ---- */
+
+  #window-archive {
+    background: #beb5c4;
+  }
+
+  .archive-content {
+    padding: 0 2rem 2rem;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .archive-year {
+    margin-bottom: 0.25rem;
+  }
+
+  .archive-year-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    background: none;
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    padding: 0.5rem 0;
+    cursor: pointer;
+    font-family: 'Goudy Bookletter 1911', Georgia, serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.85);
+    text-align: left;
+  }
+
+  .archive-year-header:hover {
+    color: rgba(158, 145, 145, 0.85);
+  }
+
+  .archive-year-arrow {
+    font-size: 1.2rem;
+    width: 1rem;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .archive-year-list {
+    padding: 0.4rem 0 0.4rem 1.5rem;
+  }
+
+  .archive-show {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.35rem 0;
+    text-decoration: none;
+    color: rgba(0, 0, 0, 0.55);
+    transition: color 0.15s;
+  }
+
+  .archive-show:hover {
+    color: rgba(158, 145, 145, 0.85);
+  }
+
+  .archive-show-title {
+    font-family: 'Monument Grotesk Variable', 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+  }
+
+  .archive-show-date {
+    font-family: 'Monument Grotesk Variable', 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+    opacity: 0.6;
+    white-space: nowrap;
   }
 
   /* ---- Lightbox ---- */
@@ -865,20 +1028,31 @@ const infoPages = rendered.filter((p) => p.row === 'info');
     text-align: left;
   }
 
+  .window-artists {
+    font-family: 'Monument Grotesk Variable', 'Space Grotesk', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 500;
+    line-height: 1.2;
+    color: rgba(0, 0, 0, 0.85);
+    margin-bottom: 0.75rem;
+  }
+
   .window-title {
     font-family: 'Goudy Bookletter 1911', Georgia, serif;
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     font-weight: 400;
-    line-height: 1;
-    color: rgba(1, 1, 1, 0.85);
-    margin-bottom: 0.5rem;
+    font-style: italic;
+    line-height: 1.15;
+    color: rgba(0, 0, 0, 0.7);
+    margin-bottom: 0.1rem;
   }
 
   .window-date {
-    font-size: 1.65rem;
-    line-height: 1.2;
-    color: rgba(1, 1, 1, 0.85);
-    margin-bottom: 0.75rem;
+    font-family: 'Monument Grotesk Variable', 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    color: rgba(0, 0, 0, 0.5);
+    margin-bottom: 1rem;
   }
 
   .window-image-top {
@@ -927,8 +1101,8 @@ const infoPages = rendered.filter((p) => p.row === 'info');
   }
 
   .window-body {
-    font-size: 1.65rem;
-    line-height: 1.2;
+    font-size: 1.05rem;
+    line-height: 1.4;
     color: rgba(1, 1, 1, 0.85);
   }
 
@@ -978,6 +1152,7 @@ const infoPages = rendered.filter((p) => p.row === 'info');
 
     .title {
       font-size: 2.85rem;
+      margin-bottom: 0;
     }
     
     .social {
@@ -988,7 +1163,7 @@ const infoPages = rendered.filter((p) => p.row === 'info');
       flex: none;
       width: 100%;
       padding: 0 0.75rem;
-      margin-top: -1.5rem;
+      margin-top: -2rem;
     }
 
     .hero-image {
@@ -997,32 +1172,30 @@ const infoPages = rendered.filter((p) => p.row === 'info');
       max-height: none;
       transform: scale(1.1);
     }
-    .address{
-      font-size: 0.93rem;
-      margin-bottom:1rem;
+    .address {
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
     }
+
     .marquee-wrap {
       width: 100%;
-      margin-top: -3rem;
+      margin-top: -2.25rem;
     }
 
     .marquee-track span {
-      font-size: 1.02rem;
-    }
-
-    .main-nav {
-      gap: 0.3rem;
-    }
-
-    .nav-row {
-      gap: 0.2rem 1.5rem;
+      font-size: 0.95rem;
     }
 
     .nav-item {
-      font-size: 1.11rem;
+      font-size: 1.1rem;
     }
+
+    .nav-date {
+      display: none;
+    }
+
     .social a {
-      font-size: 0.896rem;
+      font-size: 0.85rem;
     }
 
 
@@ -1051,15 +1224,22 @@ const infoPages = rendered.filter((p) => p.row === 'info');
 
     .window-content {
       padding: 0 1.25rem 1.25rem;
-      font-size: 0.9rem;
+    }
+
+    .window-body {
+      font-size: 0.92rem;
+    }
+
+    .window-artists {
+      font-size: 1.15rem;
     }
 
     .window-title {
-      font-size: 1.8rem;
+      font-size: 1.5rem;
     }
 
     .window-date {
-      font-size: 1.2rem;
+      font-size: 0.85rem;
     }
   }
 </style>

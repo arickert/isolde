@@ -1,6 +1,6 @@
 ---
 title: "Press"
-icon: "/icons/globe.svg"
+icon: ""
 row: "info"
 images:
   - "https://picsum.photos/seed/isolde-gs1/800/600"

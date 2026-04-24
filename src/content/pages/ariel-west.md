@@ -1,5 +1,6 @@
 ---
-title: "Ariel West"
+title: "Soft Architecture"
+artists: "Ariel West"
 icon: "/icons/construction.svg"
 date: "March 8 – April 19, 2026"
 status: "current"

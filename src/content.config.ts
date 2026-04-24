@@ -5,10 +5,11 @@ const pages = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/pages' }),
   schema: z.object({
     title: z.string(),
+    artists: z.string().optional(),
     date: z.string().optional(),
     images: z.array(z.string()).optional(),
     order: z.number().default(0),
-    icon: z.preprocess((v) => (v === '' ? undefined : v), z.string().optional()),
+    icon: z.string().optional(),
     width: z.number().default(678),
     color: z.string().default('#beb5c4'),
     videos: z.array(z.string()).optional(),
