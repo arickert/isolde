@@ -15,6 +15,8 @@ const pages = defineCollection({
     videos: z.array(z.string()).optional(),
     row: z.preprocess((v) => (v === '' ? undefined : v), z.enum(['current', 'past', 'info']).optional()),
     status: z.preprocess((v) => (v === '' ? undefined : v), z.enum(['past', 'current', 'future']).optional()),
+    featured: z.boolean().optional(),
+    autoOpen: z.boolean().optional(),
   }),
 });
 

@@ -39,11 +39,13 @@ const rendered = await Promise.all(
   })
 );
 
-const nowShows = rendered.filter((p) => p.row === 'current' && p.data.status === 'current');
-const futureShows = rendered.filter((p) => p.row === 'current' && p.data.status === 'future');
+const featuredCurrent = rendered.filter((p) => p.data.status === 'current' && p.data.featured);
+const featuredFuture = rendered.filter((p) => p.data.status === 'future' && p.data.featured);
+const featuredPast = rendered.filter((p) => p.data.status === 'past' && p.data.featured);
 const currentShows = rendered.filter((p) => p.row === 'current');
 const pastShows = rendered.filter((p) => p.row === 'past');
 const infoPages = rendered.filter((p) => p.row === 'info');
+const autoOpenPages = rendered.filter((p) => p.data.autoOpen);
 
 function extractYear(date?: string): number {
   if (!date) return 0;
@@ -93,39 +95,40 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
       />
     </a>
 
-    <div class="marquee-wrap">
-      <div class="marquee">
-        <div class="marquee-track">
-          <span>Isolde is an artist-run project space for exhibitions, screenings, and experimental work.&nbsp;&nbsp;&nbsp;&nbsp;</span>
-          <span>Isolde is an artist-run project space for exhibitions, screenings, and experimental work.&nbsp;&nbsp;&nbsp;&nbsp;</span>
-        </div>
+    <!-- <p class="tagline">Isolde is an artist-run project space for exhibitions, performances, and experimental work.</p> -->
+
+    <div class="show-ticker">
+      <div class="ticker-track">
+        {[0, 1].map(() => (
+          <Fragment>
+            {featuredFuture.map((page) => (
+              <a href="#" class="ticker-item" data-window={page.id}>
+                <span class="nav-label">Future</span>
+                {page.data.artists
+                  ? <Fragment><strong>{page.data.artists}</strong> <em>{page.data.title}</em></Fragment>
+                  : page.data.title}
+              </a>
+            ))}
+            {featuredCurrent.map((page) => (
+              <a href="#" class="ticker-item" data-window={page.id}>
+                <span class="nav-label">Current</span>
+                {page.data.artists
+                  ? <Fragment><strong>{page.data.artists}</strong> <em>{page.data.title}</em></Fragment>
+                  : page.data.title}
+              </a>
+            ))}
+            {featuredPast.map((page) => (
+              <a href="#" class="ticker-item" data-window={page.id}>
+                <span class="nav-label">Past</span>
+                {page.data.artists
+                  ? <Fragment><strong>{page.data.artists}</strong> <em>{page.data.title}</em></Fragment>
+                  : page.data.title}
+              </a>
+            ))}
+          </Fragment>
+        ))}
       </div>
     </div>
-
-    <nav class="main-nav">
-      {nowShows.map((page) => (
-        <a href="#" class="nav-item" data-window={page.id}>
-          {page.icon.endsWith('.svg')
-            ? <img class="nav-icon" src={`${base}${page.icon}`} alt="" />
-            : page.icon ? <Fragment>{page.icon}&thinsp;</Fragment> : null}
-          {page.data.artists
-            ? <Fragment><strong>{page.data.artists}</strong> <em>{page.data.title}</em></Fragment>
-            : page.data.title}
-          {page.data.date && <span class="nav-date">{page.data.date}</span>}
-        </a>
-      ))}
-      {futureShows.map((page) => (
-        <a href="#" class="nav-item" data-window={page.id}>
-          {page.icon.endsWith('.svg')
-            ? <img class="nav-icon" src={`${base}${page.icon}`} alt="" />
-            : page.icon ? <Fragment>{page.icon}&thinsp;</Fragment> : null}
-          {page.data.artists
-            ? <Fragment><strong>{page.data.artists}</strong> <em>{page.data.title}</em></Fragment>
-            : page.data.title}
-          {page.data.date && <span class="nav-date">{page.data.date}</span>}
-        </a>
-      ))}
-    </nav>
 
     <div class="info-row">
       {infoPages.map((page) => (
@@ -138,6 +141,7 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
       {pastShows.length > 0 && (
         <a href="#" class="nav-item" id="archive-toggle">Archive</a>
       )}
+      <span class="nav-item" style="cursor: default; opacity: 0.5;">Shop</span>
     </div>
 
     <div class="social">
@@ -206,7 +210,7 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
     </div>
 
     {rendered.map((page) => (
-      <div class="window" id={`window-${page.id}`} style={`width: ${page.data.width}px; background: ${page.data.color};`}>
+      <div class="window" id={`window-${page.id}`} style={`width: ${page.data.width}px; background: ${page.data.color};`} {...(page.data.autoOpen ? {'data-auto-open': ''} : {})}>
         <div class="window-header">
           <button class="window-close" aria-label="Close">&times;</button>
         </div>
@@ -215,20 +219,31 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
           <h1 class="window-title">{page.data.title}</h1>
           {page.data.date && <p class="window-date">{page.data.date}</p>}
           {page.data.images && page.data.images.length > 0 && (
-            <div class="window-image-top">
-              <img src={page.data.images[0]} alt="" />
+            <div class="window-carousel" data-index="0">
+              <div class="carousel-viewport">
+                <img class="carousel-img" src={page.data.images[0]} alt="" />
+              </div>
+              {page.data.images.length > 1 && (
+                <button class="carousel-prev" aria-label="Previous"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              )}
+              {page.data.images.length > 1 && (
+                <button class="carousel-next" aria-label="Next"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              )}
+              {page.data.images.length > 1 && (
+                <div class="carousel-counter">
+                  <span class="carousel-current">1</span> / {page.data.images.length}
+                </div>
+              )}
+              <div class="carousel-sources" style="display:none;">
+                {page.data.images.map((img: string) => (
+                  <span data-src={img} />
+                ))}
+              </div>
             </div>
           )}
           <div class="window-body">
             <page.Content />
           </div>
-          {page.data.images && page.data.images.length > 1 && (
-            <div class="window-images">
-              {page.data.images.slice(1).map((img: string) => (
-                <img src={img} alt="" />
-              ))}
-            </div>
-          )}
           {page.data.videos && page.data.videos.length > 0 && (
             <div class="window-videos">
               {page.data.videos.map((url: string) => {
@@ -352,12 +367,16 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
         if (isMobile()) return;
         if ((e.target as HTMLElement).closest('a, button, input, textarea, select, img')) return;
 
+        const rect = win.getBoundingClientRect();
+        const fromRight = rect.right - e.clientX;
+        const fromBottom = rect.bottom - e.clientY;
+        if (fromRight < 18 && fromBottom < 18) return;
+
         dragging = true;
         win.classList.add('is-dragging');
         win.setPointerCapture(e.pointerId);
         bringToFront(win);
 
-        const rect = win.getBoundingClientRect();
         startX = e.clientX;
         startY = e.clientY;
         originLeft = rect.left;
@@ -447,16 +466,36 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
       if (e.key === 'ArrowRight') lightboxNext.click();
     });
 
-    document.querySelectorAll('.window-content img').forEach((img) => {
-      (img as HTMLElement).style.cursor = 'zoom-in';
-      (img as HTMLElement).draggable = false;
+    // Carousel navigation
+    document.querySelectorAll<HTMLElement>('.window-carousel').forEach((carousel) => {
+      const sources = Array.from(carousel.querySelectorAll('.carousel-sources span')).map(
+        (s) => (s as HTMLElement).dataset.src!
+      );
+      const img = carousel.querySelector('.carousel-img') as HTMLImageElement;
+      const counter = carousel.querySelector('.carousel-current');
+      let idx = 0;
+
+      function showSlide(i: number) {
+        idx = (i + sources.length) % sources.length;
+        img.src = sources[idx];
+        carousel.dataset.index = String(idx);
+        if (counter) counter.textContent = String(idx + 1);
+      }
+
+      carousel.querySelector('.carousel-prev')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showSlide(idx - 1);
+      });
+      carousel.querySelector('.carousel-next')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showSlide(idx + 1);
+      });
+
+      img.style.cursor = 'zoom-in';
+      img.draggable = false;
       img.addEventListener('dragstart', (e) => e.preventDefault());
-      img.addEventListener('dblclick', () => {
-        const win = img.closest('.window-content');
-        if (!win) return;
-        const allImgs = Array.from(win.querySelectorAll('img')).map((i) => (i as HTMLImageElement).src);
-        const idx = allImgs.indexOf((img as HTMLImageElement).src);
-        openLightbox(allImgs, idx >= 0 ? idx : 0);
+      img.addEventListener('click', () => {
+        openLightbox(sources, idx);
       });
     });
 
@@ -510,6 +549,11 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
         const windowId = (link as HTMLElement).dataset.window;
         if (windowId) openWindow(windowId);
       });
+    });
+
+    document.querySelectorAll<HTMLElement>('.window[data-auto-open]').forEach((win) => {
+      const id = win.id.replace('window-', '');
+      openWindow(id);
     });
 
   </script>
@@ -611,53 +655,94 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
     transform: scale(1.25);
   }
 
-  /* ---- Marquee ---- */
+  /* ---- Tagline ---- */
 
-  .marquee-wrap {
+  .tagline {
+    font-family: 'Goudy Bookletter 1911', Georgia, serif;
+    font-size: 1.02rem;
+    font-weight: 400;
+    line-height: 1.2;
+    color: rgba(0, 0, 0, 0.85);
     max-width: 600px;
-    overflow: hidden;
     margin-top: 1rem;
     margin-bottom: 0;
     position: relative;
     z-index: 2;
   }
 
-  .marquee {
-    overflow: hidden;
-  }
-
-  .marquee-track {
-    display: inline-flex;
-    white-space: nowrap;
-    animation: marquee-scroll 10s linear infinite;
-  }
-
-  .marquee-track span {
-    flex-shrink: 0;
-    font-family: 'Goudy Bookletter 1911', Georgia, serif;
-    font-size: 1.02rem;
-    font-weight: 400;
-    line-height: 1.2;
-    color: rgba(0, 0, 0, 0.85);
-  }
-
-  @keyframes marquee-scroll {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
-
   /* ---- Navigation ---- */
 
-  .main-nav {
+  /* ---- Show Ticker ---- */
+
+  .show-ticker {
+    height: 6rem;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .ticker-track {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.1rem;
-    padding: 0.3rem 1.5rem;
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
-    position: relative;
-    z-index: 2;
+    animation: ticker-scroll 15s linear infinite;
+  }
+
+  .ticker-item {
+    font-family: 'Goudy Bookletter 1911', Georgia, serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    line-height: 2rem;
+    color: rgba(0, 0, 0, 0.85);
+    cursor: pointer;
+    text-decoration: none;
+    padding: 0;
+    white-space: nowrap;
+  }
+
+  .ticker-item:nth-child(1), .ticker-item:nth-child(4) { animation: fade-a 15s linear infinite; }
+  .ticker-item:nth-child(2), .ticker-item:nth-child(5) { animation: fade-b 15s linear infinite; }
+  .ticker-item:nth-child(3), .ticker-item:nth-child(6) { animation: fade-c 15s linear infinite; }
+
+  .ticker-item strong {
+    font-family: 'Monument Grotesk Variable', 'Space Grotesk', sans-serif;
+    font-weight: 500;
+  }
+
+  .ticker-item:hover {
+    color: rgba(158, 145, 145, 0.85);
+  }
+
+  @keyframes ticker-scroll {
+    from { transform: translateY(0); }
+    to { transform: translateY(-50%); }
+  }
+
+  @keyframes fade-a {
+    0% { opacity: 0; }
+    61% { opacity: 0; }
+    72% { opacity: 1; }
+    94% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @keyframes fade-b {
+    0% { opacity: 1; }
+    28% { opacity: 1; }
+    33.3% { opacity: 0; }
+    94% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes fade-c {
+    0% { opacity: 0; }
+    28% { opacity: 0; }
+    38% { opacity: 1; }
+    61% { opacity: 1; }
+    66% { opacity: 0; }
+    100% { opacity: 0; }
   }
 
   .info-row {
@@ -677,25 +762,18 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
     cursor: pointer;
   }
 
-  .nav-item strong {
+  .nav-label {
     font-family: 'Monument Grotesk Variable', 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
     font-weight: 500;
-  }
-
-  .nav-date {
-    font-family: 'Monument Grotesk Variable', 'Space Grotesk', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 400;
-    color: rgba(0, 0, 0, 0.35);
-    margin-left: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(0, 0, 0, 0.4);
+    margin-right: 0.5rem;
   }
 
   .nav-item:hover {
     color: rgba(158, 145, 145, 0.85);
-  }
-
-  .nav-item:hover .nav-date {
-    color: rgba(158, 145, 145, 0.6);
   }
 
   .nav-icon {
@@ -1055,25 +1133,77 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
     margin-bottom: 1rem;
   }
 
-  .window-image-top {
+  .window-carousel {
     margin-bottom: 1rem;
+    user-select: none;
   }
 
-  .window-image-top img,
-  .window-images img {
+  .carousel-viewport {
+    position: relative;
     width: 100%;
-    height: auto;
+    height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: inherit;
+  }
+
+  .carousel-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
     display: block;
     -webkit-user-drag: none;
     user-select: none;
     pointer-events: auto;
   }
 
-  .window-images {
+  .carousel-prev,
+  .carousel-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.65);
+    border: none;
+    border-radius: 2px;
+    width: 1.75rem;
+    height: 1.75rem;
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-top: 1.25rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    color: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .carousel-prev svg,
+  .carousel-next svg {
+    display: block;
+  }
+
+  .window-carousel:hover .carousel-prev,
+  .window-carousel:hover .carousel-next {
+    opacity: 1;
+  }
+
+  .carousel-prev { left: 1rem; }
+  .carousel-next { right: 1rem; }
+
+  .carousel-prev:hover,
+  .carousel-next:hover {
+    background: rgba(255, 255, 255, 0.85);
+    color: rgba(0, 0, 0, 0.85);
+  }
+
+  .carousel-counter {
+    text-align: center;
+    font-family: 'Monument Grotesk Variable', 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.45);
+    margin-top: 0.35rem;
   }
 
 
@@ -1135,6 +1265,15 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
   /* ---- Mobile ---- */
 
   @media (max-width: 678px) {
+    .carousel-viewport {
+      height: 280px;
+    }
+
+    .carousel-prev,
+    .carousel-next {
+      opacity: 1;
+    }
+
     body {
       overflow: auto;
       font-size: 1.3rem;
@@ -1145,8 +1284,9 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
     }
 
     .page {
-      height: auto;
-      overflow: visible;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
       padding: 1.25rem 0rem 1.5rem;
     }
 
@@ -1160,16 +1300,17 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
     }
 
     .hero-link {
-      flex: none;
+      flex: 1;
+      min-height: 0;
       width: 100%;
       padding: 0 0.75rem;
       margin-top: -2rem;
     }
 
     .hero-image {
-      width: 100%;
       max-width: 550px;
-      max-height: none;
+      max-height: 100%;
+      width: auto;
       transform: scale(1.1);
     }
     .address {
@@ -1177,21 +1318,26 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
       margin-bottom: 0.75rem;
     }
 
-    .marquee-wrap {
-      width: 100%;
-      margin-top: -2.25rem;
-    }
-
-    .marquee-track span {
+    .tagline {
       font-size: 0.95rem;
+      margin-top: -2.25rem;
+      padding: 0 1rem;
     }
 
     .nav-item {
       font-size: 1.1rem;
     }
 
-    .nav-date {
-      display: none;
+    .nav-label {
+      font-size: 0.6rem;
+    }
+
+    .show-ticker {
+      height: 4rem;
+    }
+
+    .ticker-item {
+      font-size: 1.1rem;
     }
 
     .social a {
@@ -1211,6 +1357,7 @@ const pastYears = [...pastByYear.keys()].sort((a, b) => b - a);
       max-height: none !important;
       border: none;
       cursor: auto;
+      resize: none;
       z-index: 1001 !important;
     }
 
